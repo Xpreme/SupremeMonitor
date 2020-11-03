@@ -70,7 +70,7 @@ async fn main() -> std::result::Result<(), Box<dyn std::error::Error + Send + Sy
     for (key, _value) in v["products_and_categories"].as_object().unwrap() {
         println!("{}", key);
         for (value) in v["products_and_categories"][key].as_array().unwrap(){
-            println!("{}", value);
+            println!("{}", value["id"]);
         }
     }
 
