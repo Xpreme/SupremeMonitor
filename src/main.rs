@@ -42,14 +42,6 @@ struct ProductIds {
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-// Notifs
-
-async fn notify(https: hyper_tls::HttpsConnector, client: hyper::client::Client )-> std::result::Result<(), Box<dyn std::error::Error + Send + Sync>> {
-    let webhook = env::var("webhookurl").unwrap.as_str().parse()?;
-    Ok(());
-}
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
 // Request to mobile endpoint
 
 //TODO: Will I get banned from the mobile endpoint lol???
@@ -61,16 +53,17 @@ async fn main() -> std::result::Result<(), Box<dyn std::error::Error + Send + Sy
     // building client and request (has to use tls otherwise 304 status)
     let https = HttpsConnector::new();
     let client = Client::builder().build::<_, hyper::Body>(https);
-    let mut newstate: Vec<u32> = Vec::new();
-    let mut oldstate: Vec<u32> = Vec::new();
+    let mut newstate: Vec<serde_json::Value> = Vec::new();
+    let mut oldstate: Vec<u64> = Vec::new();
+    let webhookurl = env::var("webhookurl").unwrap().as_str().parse()?;
+    let mobile_endpoint: hyper::Uri = "https://www.supremenewyork.com/mobile_stock.json".parse()?; 
 
     loop {
         //executing request
         //TODO: needs a loop | sorta done...
 
-        let mobile_endpoint = "https://www.supremenewyork.com/mobile_stock.json".parse()?; 
         let resp = client
-            .get(mobile_endpoint)
+            .get(mobile_endpoint.clone)
             .await?;
  
         //println!("status: {:#?}", resp.status());
@@ -81,7 +74,10 @@ async fn main() -> std::result::Result<(), Box<dyn std::error::Error + Send + Sy
             .expect("resp not utf8");
 
         //so we can use this str as json
-        let v: Value = serde_json::from_str(&body)?; 
+        let v: Value = match serde_json::from_str(&body) {
+            Ok(_) => (),
+            Err(_) => println!("could not parse json"),
+        }; 
      
         for (key, _value) in v["products_and_categories"].as_object().unwrap() {
             //println!("{}", key);
@@ -89,9 +85,26 @@ async fn main() -> std::result::Result<(), Box<dyn std::error::Error + Send + Sy
                 //println!("{}", value["id"]);
                 newstate.push(value["id"]);
             }
-            println!("{}", newstate);
+            println!("{:?}", newstate);
         }
     }
     //println!("body: {}", body);
 }
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+// Variant Checking
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+// Notifs
+
+async fn notify(url: hyper::Uri, ) -> std::result::Result<()> {
+    let https = HttpsConnector::new();
+    let client = Client::builder().build.<_, hyper::Body>(https);
+    
+    let req = Request::builder()
+        .method("POST")
+        .uri(url)
+        .body()
+}
+
 
