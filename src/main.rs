@@ -22,7 +22,7 @@ use serde::{
 use tokio;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-// Json Objects
+// Json Objects And Data
 
 #[derive(Serialize, Deserialize)]
 struct ProductIds {
@@ -46,20 +46,22 @@ struct ProductIds {
 #[tokio::main]
 async fn main() -> std::result::Result<(), Box<dyn std::error::Error + Send + Sync>> {
     
+    pretty_env_logger::init();   
+
+    // building client and request (has to use tls otherwise 304 status)
+    let https = HttpsConnector::new();
+    let client = Client::builder().build::<_, hyper::Body>(https);
+    
     loop {
-        // building client and request (has to use tls otherwise 304 status)
-        let https = HttpsConnector::new();
-        let client = Client::builder().build::<_, hyper::Body>(https);
-        let mobile_endpoint = "https://www.supremenewyork.com/mobile_stock.json".parse()?;
-
         //executing request
-        //TODO: needs a loop
+        //TODO: needs a loop | sorta done...
 
+        let mobile_endpoint = "https://www.supremenewyork.com/mobile_stock.json".parse()?; 
         let resp = client
             .get(mobile_endpoint)
             .await?;
  
-        println!("status: {:#?}", resp.status());
+        //println!("status: {:#?}", resp.status());
 
         //going from stream to str
         let bod_byte = body::to_bytes(resp.into_body()).await?;
@@ -70,10 +72,9 @@ async fn main() -> std::result::Result<(), Box<dyn std::error::Error + Send + Sy
         let v: Value = serde_json::from_str(&body)?; 
 
         for (key, _value) in v["products_and_categories"].as_object().unwrap() {
-            println!("{}", key);
+            //println!("{}", key);
             for value in v["products_and_categories"][key].as_array().unwrap(){
-                 
-                println!("{}", value["id"]);
+                //println!("{}", value["id"]);
             }
         }
     }
