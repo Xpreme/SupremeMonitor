@@ -63,7 +63,7 @@ async fn main() -> std::result::Result<(), Box<dyn std::error::Error + Send + Sy
         //TODO: needs a loop | sorta done...
 
         let resp = client
-            .get(mobile_endpoint.clone)
+            .get(mobile_endpoint.clone())
             .await?;
  
         //println!("status: {:#?}", resp.status());
@@ -74,10 +74,7 @@ async fn main() -> std::result::Result<(), Box<dyn std::error::Error + Send + Sy
             .expect("resp not utf8");
 
         //so we can use this str as json
-        let v: Value = match serde_json::from_str(&body) {
-            Ok(_) => (),
-            Err(_) => println!("could not parse json"),
-        }; 
+        let v: Value = serde_json::from_str(&body)?; 
      
         for (key, _value) in v["products_and_categories"].as_object().unwrap() {
             //println!("{}", key);
@@ -97,14 +94,18 @@ async fn main() -> std::result::Result<(), Box<dyn std::error::Error + Send + Sy
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Notifs
 
-async fn notify(url: hyper::Uri, ) -> std::result::Result<()> {
+async fn notify(url: hyper::Uri, price: String, style: String, Size: String)
+-> std::result::Result<(), Box<dyn std::error::Error + Send + Sync>> {
     let https = HttpsConnector::new();
-    let client = Client::builder().build.<_, hyper::Body>(https);
+    let client = Client::builder().build::<_, hyper::Body>(https);
     
     let req = Request::builder()
         .method("POST")
         .uri(url)
-        .body()
+        .header("Content-Type","application/json") 
+        .body(());
+
+    Ok(())
 }
 
 
