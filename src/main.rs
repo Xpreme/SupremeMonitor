@@ -53,9 +53,9 @@ async fn main() -> std::result::Result<(), Box<dyn std::error::Error + Send + Sy
     // building client and request (has to use tls otherwise 304 status)
     let https = HttpsConnector::new();
     let client = Client::builder().build::<_, hyper::Body>(https);
-    let mut newstate: Vec<serde_json::Value> = Vec::new();
+    let mut newstate: Vec<u64> = Vec::new();
     let mut oldstate: Vec<u64> = Vec::new();
-    let webhookurl = env::var("webhookurl").unwrap().as_str().parse()?;
+    let webhookurl: hyper::Uri = env::var("webhookurl").unwrap().parse()?;
     let mobile_endpoint: hyper::Uri = "https://www.supremenewyork.com/mobile_stock.json".parse()?; 
 
     loop {
@@ -79,8 +79,10 @@ async fn main() -> std::result::Result<(), Box<dyn std::error::Error + Send + Sy
         for (key, _value) in v["products_and_categories"].as_object().unwrap() {
             //println!("{}", key);
             for value in v["products_and_categories"][key].as_array().unwrap(){
-                //println!("{}", value["id"]);
-                newstate.push(value["id"]);
+                match value["id"].as_u64() {
+                    None => println!("whoops invalid prod id!"),
+                    Some(prodid) => newstate.push(prodid),
+                }
             }
             println!("{:?}", newstate);
         }
